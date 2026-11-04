@@ -87,9 +87,12 @@ export default function App() {
     }
   }, [cooldownTime]);
 
-  const handleGoogleLogin = async () => {
+const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+      },
     });
     if (error) {
       alert('Gagal login: ' + error.message);
