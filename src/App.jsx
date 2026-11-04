@@ -10,11 +10,12 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [loadingSession, setLoadingSession] = useState(true);
 
-  const queryParams = new URLSearchParams(window.location.search);
+const queryParams = new URLSearchParams(window.location.search);
   const urlClassId = queryParams.get('class_id') || '';
 
   const [currentClass, setCurrentClass] = useState(null);
-  const [classId, setClassId] = useState(urlClassId);
+  // Prioritas baca dari URL, jika kosong ambil dari localStorage supaya tidak kereset
+  const [classId, setClassId] = useState(urlClassId || localStorage.getItem('saved_class_id') || '');
   const [selectedPace, setSelectedPace] = useState(null);
   const [submittedPace, setSubmittedPace] = useState(false);
   
@@ -141,10 +142,14 @@ const handleGoogleLogin = async () => {
     };
   }, [isScanning]);
 
-  const handleScannedClass = (scannedId) => {
+const handleScannedClass = (scannedId) => {
     setClassId(scannedId);
     setSelectedPace(null);
     setSubmittedPace(false);
+    
+    // Simpan permanen di memori browser mahasiswa agar tidak hilang saat refresh
+    localStorage.setItem('saved_class_id', scannedId);
+
     window.history.pushState({}, '', `/?class_id=${scannedId}`);
     alert(`Berhasil bergabung ke kelas: ${scannedId}!`);
   };
@@ -247,11 +252,24 @@ const handleGoogleLogin = async () => {
         <div style={styles.classSelectorBox}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <span style={{ fontSize: '12px', color: '#64748b' }}>Kelas Terhubung:</span>
-              <h4 style={{ margin: '2px 0 0 0', color: '#1e293b' }}>
-                {currentClass ? `${currentClass.name} (${currentClass.id})` : 'Belum memilih kelas / Silakan Scan QR'}
-              </h4>
-            </div>
+  <span style={{ fontSize: '12px', color: '#64748b' }}>Kelas Terhubung:</span>
+  <h4 style={{ margin: '2px 0 0 0', color: '#1e293b' }}>
+    {currentClass ? `${currentClass.name} (${currentClass.id})` : 'Belum memilih kelas / Silakan Scan QR'}
+  </h4>
+  {currentClass && (
+    <button
+      onClick={() => {
+        localStorage.removeItem('saved_class_id');
+        setClassId('');
+        setCurrentClass(null);
+        window.history.pushState({}, '', window.location.pathname);
+      }}
+      style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '11px', cursor: 'pointer', padding: 0, marginTop: '4px', textDecoration: 'underline' }}
+    >
+      Keluar / Ganti Kelas
+    </button>
+  )}
+</div>
             <button 
               onClick={() => setIsScanning(!isScanning)} 
               style={styles.scanToggleBtn}
